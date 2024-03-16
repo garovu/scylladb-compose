@@ -1,5 +1,5 @@
 version: "3"
-name: scylladc
+name: scylla-cluster
 
 services:
   scylla-node1:
@@ -13,7 +13,7 @@ services:
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
       - "./data/mutant-data.txt:/mutant-data.txt"
     networks:
-      scyllavnet:
+      vnet:
 
   scylla-node2:
     container_name: scylla-node2
@@ -25,7 +25,7 @@ services:
       - "./config/scylla.yml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
     networks:
-      scyllavnet:
+      vnet:
 
   scylla-node3:
     container_name: scylla-node3
@@ -37,8 +37,8 @@ services:
       - "./config/scylla.yml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
     networks:
-      scyllavnet:
+      vnet:
 
 networks:
-  scyllavnet:
+  vnet:
     driver: bridge

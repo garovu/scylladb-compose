@@ -12,6 +12,7 @@ Before running the ScyllaDB Docker Compose configuration, make sure you have the
 If your machine is using a Linux virtual machine to run a Linux kernel for Docker, please check if `/proc/sys/fs/aio-max-nr` is large enough. Multiple cores requires setting a proper value to the `/proc/sys/fs/aio-max-nr`. On many non production systems it will be equal to 65K. The formula to calculate proper value is: `11026 * cpu_cores`. [Read more in this official image.](https://hub.docker.com/r/scylladb/scylla)
 
 To change default values, try this:
+
 [See more in this issue](https://github.com/scylladb/scylladb/issues/5638).
 
 ```shell
@@ -36,7 +37,7 @@ Issues:
 1. Clone this repository:
 
     ```shell
-    git clone https://github.com/your-username/scylladb-compose.git
+    git clone https://github.com/garovu/scylladb-compose.git
     ```
 
 2. Navigate to the cloned repository:
@@ -51,7 +52,7 @@ Issues:
     docker-compose up -d
     ```
 
-    This will start a single-node ScyllaDB cluster in detached mode.
+    This will start a three-nodes ScyllaDB cluster in detached mode.
 
 4. Verify that the ScyllaDB cluster is running:
 
@@ -60,6 +61,25 @@ Issues:
     ```
 
     You should see the ScyllaDB container listed as "Up".
+
+    ```shell
+    docker-compose exec scylla-node1 nodetool status
+    ```
+
+    Check ScyllaDB cluster status. Example:
+
+    ```shell
+    Datacenter: datacenter1
+    =======================
+    Status=Up/Down
+    |/ State=Normal/Leaving/Joining/Moving
+    --  Address     Load       Tokens       Owns    Host ID                               Rack
+    UN  172.18.0.2  63.98 KB   256          ?       87461c7e-31af-450e-ac5e-d3802cbd3a22  rack1
+    UN  172.18.0.3  112.7 KB   256          ?       6b25d433-66f0-4b9b-98de-bd62a360a980  rack1
+    UN  172.18.0.4  223.83 KB  256          ?       488b5340-ab99-4efb-958f-6e66a24789a8  rack1
+
+    Note: Non-system keyspaces don't have the same replication settings, effective ownership information is meaningless
+    ```
 
 5. Connect to the ScyllaDB cluster:
 

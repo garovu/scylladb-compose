@@ -1,0 +1,44 @@
+version: "3"
+name: scylladc
+
+services:
+  scylla-node1:
+    container_name: scylla-node1
+    hostname: scylla-node1
+    image: scylladb/scylla:latest
+    restart: always
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    volumes:
+      - "./config/scylla.yml:/etc/scylla/scylla.yaml"
+      - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+      - "./data/mutant-data.txt:/mutant-data.txt"
+    networks:
+      scyllavnet:
+
+  scylla-node2:
+    container_name: scylla-node2
+    hostname: scylla-node2
+    image: scylladb/scylla:latest
+    restart: always
+    command: --seeds=scylla-node1 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    volumes:
+      - "./config/scylla.yml:/etc/scylla/scylla.yaml"
+      - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+    networks:
+      scyllavnet:
+
+  scylla-node3:
+    container_name: scylla-node3
+    hostname: scylla-node3
+    image: scylladb/scylla:latest
+    restart: always
+    command: --seeds=scylla-node1 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    volumes:
+      - "./config/scylla.yml:/etc/scylla/scylla.yaml"
+      - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+    networks:
+      scyllavnet:
+
+networks:
+  scyllavnet:
+    driver: bridge

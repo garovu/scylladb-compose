@@ -9,7 +9,7 @@ services:
     restart: always
     command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
     volumes:
-      - "./config/scylla.yml:/etc/scylla/scylla.yaml"
+      - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
       - "./data/mutant-data.txt:/mutant-data.txt"
     networks:
@@ -22,7 +22,7 @@ services:
     restart: always
     command: --seeds=scylla-node1 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
     volumes:
-      - "./config/scylla.yml:/etc/scylla/scylla.yaml"
+      - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
     networks:
       vnet:
@@ -34,7 +34,7 @@ services:
     restart: always
     command: --seeds=scylla-node1 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
     volumes:
-      - "./config/scylla.yml:/etc/scylla/scylla.yaml"
+      - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
     networks:
       vnet:

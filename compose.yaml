@@ -7,11 +7,14 @@ services:
     hostname: scylla-node1
     image: scylladb/scylla:latest
     restart: always
-    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
       - "./data/mutant-data.txt:/mutant-data.txt"
+    ports:
+      - 9100:9100 # Node Exporter
+      - 9180:9180 # Scylla Metrics
     networks:
       vnet:
 
@@ -20,10 +23,15 @@ services:
     hostname: scylla-node2
     image: scylladb/scylla:latest
     restart: always
-    command: --seeds=scylla-node1 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M 
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+    ports:
+      - 9101:9100 # Node Exporter
+      - 9181:9180 # Scylla Metrics
+    depends_on:
+      - scylla-node1
     networks:
       vnet:
 
@@ -32,10 +40,16 @@ services:
     hostname: scylla-node3
     image: scylladb/scylla:latest
     restart: always
-    command: --seeds=scylla-node1 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+    ports:
+      - 9102:9100 # Node Exporter
+      - 9182:9180 # Scylla Metrics
+    depends_on:
+      - scylla-node1
+      - scylla-node2
     networks:
       vnet:
 

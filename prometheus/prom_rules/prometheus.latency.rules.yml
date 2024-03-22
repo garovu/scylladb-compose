@@ -1,4 +1,4 @@
-namespace: prometheus.latency.rules
+# namespace: prometheus.latency.rules
 groups:
     - name: scylla.rules
       rules:

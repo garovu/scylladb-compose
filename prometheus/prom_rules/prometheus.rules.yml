@@ -1,4 +1,4 @@
-namespace: prometheus.rules
+# namespace: prometheus.rules
 groups:
     - name: scylla.rules
       rules:

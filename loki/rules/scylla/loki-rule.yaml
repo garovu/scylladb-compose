@@ -1,0 +1,35 @@
+groups:
+  - name: datamodel
+    rules:
+    - alert: largeEntry
+      expr: rate({app="scylla", module="seastar_memory"}[1h])>0
+      for: 20s
+      labels:
+        severity: "1"
+      annotations:
+        description: '{{ $labels.instance }} {{ $labels.msg }} memory.'
+    - alert: largeEntry
+      expr: rate({app="scylla", module="large_data"}[1h])>0
+      for: 20s
+      labels:
+        severity: "1"
+      annotations:
+        description: '{{ $labels.instance }} {{ $labels.msg }} memory.'
+    - alert: nonpagedQueryLimit
+      expr: rate({app="scylla", module="mutation_partition", severity="warning"}[1h])>0
+      for: 20s
+      labels:
+        severity: "1"
+        advisor: "cqlOptimization"
+        dashboard: "cql"
+      annotations:
+        description: '{{ $labels.instance }} Unpaged query exceeds memory limit'
+    - alert: reverseOrderLimit
+      expr: rate({app="scylla", module="flat_mutation_reader", severity="warning"}[1h])>0
+      for: 20s
+      labels:
+        severity: "1"
+        advisor: "cqlOptimization"
+        dashboard: "cql"
+      annotations:
+        description: '{{ $labels.instance }} Reversed read exceeds memory limit'

@@ -1,0 +1,368 @@
+namespace: prometheus.latency.rules
+groups:
+    - name: scylla.rules
+      rules:
+        - record: cql:all_shardrate1m
+          expr: sum by (cluster, dc, instance, shard) (rate(scylla_cql_reads[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_cql_inserts[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_cql_updates[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_cql_deletes[1m]))
+        - record: cql:all_system_shardrate1m
+          expr: sum by (cluster, dc, instance, shard) (rate(scylla_cql_reads_per_ks{ks="system"}[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_cql_inserts_per_ks{ks="system"}[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_cql_updates_per_ks{ks="system"}[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_cql_deletes_per_ks{ks="system"}[1m]))
+        - record: cql:local_shardrate1m
+          expr: sum by (cluster, dc, instance, shard) (rate(scylla_storage_proxy_coordinator_reads_local_node[1m])) + sum by (cluster, dc, instance, shard) (rate(scylla_storage_proxy_coordinator_total_write_attempts_local_node[1m]))
+        - record: cql:all_rate1m
+          expr: sum by (cluster, dc, instance) (cql:all_shardrate1m)
+        - record: cql:non_token_aware
+          expr: (sum by (cluster) (cql:all_rate1m) > bool 100) * clamp_min(1 - (sum by (cluster) (cql:local_shardrate1m) / sum by (cluster) (cql:all_rate1m)), 0)
+        - record: cql:non_system_prepared1m
+          expr: clamp_min(sum by (cluster, dc, instance, shard) (rate(scylla_query_processor_statements_prepared[1m])) - cql:all_system_shardrate1m, 0)
+        - record: cql:non_prepared
+          expr: (sum by (cluster) (cql:non_system_prepared1m) > bool 100) * (sum by (cluster) (cql:non_system_prepared1m) / clamp_min(sum by (cluster) (cql:all_rate1m) - sum by (cluster) (cql:all_system_shardrate1m), 0.001))
+        - record: cql:non_paged_no_system1m
+          expr: clamp_min(sum by (cluster, dc, instance) (rate(scylla_cql_unpaged_select_queries[1m])) - sum by (cluster, dc, instance) (rate(scylla_cql_unpaged_select_queries_per_ks{ks="system"}[1m])), 0)
+        - record: cql:non_paged_no_system
+          expr: (sum by (cluster, dc, instance) (cql:non_paged_no_system1m) > bool 100) * sum by (cluster, dc, instance) (cql:non_paged_no_system) / clamp_min(sum by (cluster, dc, instance) (rate(scylla_cql_reads[1m])) - sum by (cluster, dc, instance) (rate(scylla_cql_unpaged_select_queries_per_ks{ks="system"}[1m])), 0.01)
+        - record: cql:non_paged
+          expr: (sum by (cluster) (cql:non_paged_no_system1m) > bool 100) * sum by (cluster) (cql:non_paged_no_system1m) / clamp_min(sum by (cluster) (rate(scylla_cql_reads[1m])) - sum by (cluster) (rate(scylla_cql_unpaged_select_queries_per_ks{ks="system"}[1m])), 0.01)
+        - record: cql:reverse_queries
+          expr: sum by (cluster) (rate(scylla_cql_reverse_queries[1m])) / sum by (cluster) (rate(scylla_cql_reads[1m]))
+        - record: cql:allow_filtering
+          expr: sum by (cluster) (rate(scylla_cql_filtered_read_requests[1m])) / sum by (cluster) (rate(scylla_cql_reads[1m]))
+        - record: cql:any_queries
+          expr: sum by (cluster) (rate(scylla_query_processor_queries{consistency_level="ANY"}[1m])) > bool 0
+        - record: cql:all_queries
+          expr: sum by (cluster) (rate(scylla_query_processor_queries{consistency_level="ALL"}[1m])) > bool 0
+        - record: errors:operation_unavailable
+          expr: sum by (cluster, dc, instance) (rate(scylla_storage_proxy_coordinator_read_unavailable[1m])) + sum by (cluster, dc, instance) (rate(scylla_storage_proxy_coordinator_write_unavailable[1m])) + sum by (cluster, dc, instance) (rate(scylla_storage_proxy_coordinator_range_unavailable[1m]))
+        - record: errors:local_failed
+          expr: sum by (cluster, dc, instance) (rate(scylla_storage_proxy_coordinator_read_errors_local_node[1m])) + sum by (cluster, dc, instance) (rate(scylla_storage_proxy_coordinator_write_errors_local_node[1m]))
+        - record: errors:nodes_total
+          expr: errors:local_failed + errors:operation_unavailable
+        - record: manager:repair_done_ts
+          expr: timestamp(sum by (cluster) (changes(scylla_manager_scheduler_run_total{status="DONE",type="repair"}[2m])) > 0) or on (cluster) manager:repair_done_ts
+        - record: manager:backup_done_ts
+          expr: timestamp(sum by (cluster) (changes(scylla_manager_scheduler_run_total{status="DONE",type="backup"}[2m])) > 0) or on (cluster) manager:backup_done_ts
+        - record: manager:repair_fail_ts
+          expr: timestamp(sum by (cluster) (changes(scylla_manager_scheduler_run_total{status="ERROR",type="repair"}[2m])) > 0) or on (cluster) manager:repair_fail_ts
+        - record: manager:backup_fail_ts
+          expr: timestamp(sum by (cluster) (changes(scylla_manager_scheduler_run_total{status="ERROR",type="backup"}[2m])) > 0) or on (cluster) manager:backup_fail_ts
+        - record: manager:repair_progress
+          expr: (max by (cluster) (scylla_manager_scheduler_run_indicator{type="repair"}) > bool 0) * ((max by (cluster) (scylla_manager_repair_token_ranges_total) <= 0) * 0 or on (cluster) (sum by (cluster) (scylla_manager_repair_token_ranges_success >= 0) + sum by (cluster) (scylla_manager_repair_token_ranges_error >= 0)) / sum by (cluster) (scylla_manager_repair_token_ranges_total >= 0))
+        - record: scylla_manager_repair_progress
+          expr: sum by (cluster) (manager:repair_progress)
+          labels:
+            by: cluster
+            dd: "1"
+        - record: manager:backup_progress
+          expr: (max by (cluster) (scylla_manager_scheduler_run_indicator{type="backup"}) > bool 0) * ((max by (cluster) (scylla_manager_backup_files_size_bytes) <= 0) * 0 or on (cluster) (sum by (cluster) (scylla_manager_backup_files_uploaded_bytes) + sum by (cluster) (scylla_manager_backup_files_skipped_bytes) + sum by (cluster) (scylla_manager_backup_files_failed_bytes)) / sum by (cluster) (scylla_manager_backup_files_size_bytes >= 0))
+        - record: scylla_manager_backup_progress
+          expr: sum by (cluster) (manager:backup_progress)
+          labels:
+            by: cluster
+            dd: "1"
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+        - record: wlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+        - record: rlatencyp99
+          expr: histogram_quantile(0.99, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+        - record: wlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+        - record: rlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+        - record: wlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_write_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, shard, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+        - record: rlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, scheduling_group_name, le) (rate(scylla_storage_proxy_coordinator_read_latency_bucket{scheduling_group_name=~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+        - record: casrlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, shard, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: casrlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: casrlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: casrlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: caswlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, shard, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: caswlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, instance, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: caswlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, dc, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: caswlatencyp95
+          expr: histogram_quantile(0.95, sum by (cluster, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: casrlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, shard, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: casrlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: casrlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: casrlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_read_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: caswlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, shard, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache",shard=~".+"}[1m])))
+          labels:
+            by: instance,shard
+            dd: "2"
+            level: "2"
+        - record: caswlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, instance, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: instance
+            dd: "1"
+        - record: caswlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, dc, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: dc
+            dd: "1"
+        - record: caswlatencya
+          expr: histogram_quantile(0.5, sum by (cluster, le, scheduling_group_name) (rate(scylla_storage_proxy_coordinator_cas_write_latency_bucket{scheduling_group_name!~"atexit|gossip|mem_compaction|memtable|streaming|background_reclaim|compaction|main|memtable_to_cache"}[1m])))
+          labels:
+            by: cluster
+            dd: "1"
+        - record: all_scheduling_group
+          expr: sum by (cluster, scheduling_group_name) (scylla_storage_proxy_coordinator_write_latency_count + scylla_storage_proxy_coordinator_read_latency_count) > 0

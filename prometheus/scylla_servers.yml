@@ -1,0 +1,9 @@
+# List Scylla end points
+
+# An example with a single cluster and two DC
+- targets:
+       - 172.17.0.2
+  labels:
+       cluster: cluster1
+       dc: dc1
+

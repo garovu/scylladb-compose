@@ -2,3 +2,9 @@
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Debug logs
+*.log
+
+# data directory
+local

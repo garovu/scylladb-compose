@@ -29,17 +29,25 @@ services:
     - ./grafana/plugins:/var/lib/grafana/plugins
     - ./grafana/provisioning:/var/lib/grafana/provisioning
     # Uncomment the following line for grafana persistency
-    # - path/to/grafana/dir:/var/lib/grafana
+    # - ./local/grafana:/var/lib/grafana
+    # or use volume
+    - grafana-vol:/var/lib/grafana
   loki:
     command:
     - --config.file=/mnt/config/loki-config.yaml
     container_name: loki
     image: grafana/loki:2.9.5
+    privileged: true
+    user: root
     ports:
     - 3100:3100
     volumes:
     - ./loki/rules:/etc/loki/rules
     - ./loki/conf:/mnt/config
+    # Uncomment the following line for grafana persistency
+    # - ./local/loki/wal:/wal
+    # using volume for persistency
+    - loki-wal:/wal
   promotheus:
     command:
     - --config.file=/etc/prometheus/prometheus.yml
@@ -54,7 +62,9 @@ services:
     - ./prometheus/scylla_manager_servers.yml:/etc/scylla.d/prometheus/targets/scylla_manager_servers.yml
     - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/node_exporter_servers.yml
     # Uncomment the following line for prometheus persistency 
-    # - path/to/data/dir:/prometheus/data
+    # - ./local/prometheus:/prometheus/data
+    # or use a volume
+    - prometheus-vol:/prometheus
   promtail:
     command:
     - --config.file=/etc/promtail/config.yml
@@ -69,3 +79,11 @@ networks:
   default:
     name: scylla-cluster_vnet
     external: true # join to the scylla-cluster_vnet network
+
+volumes:
+  grafana-vol:
+    driver: local
+  prometheus-vol:
+    driver: local
+  loki-wal:
+    driver: local

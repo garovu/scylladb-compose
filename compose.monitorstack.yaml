@@ -49,10 +49,10 @@ services:
     - 9090:9090
     volumes:
     - ./prometheus/build/prometheus.yml:/etc/prometheus/prometheus.yml
-    - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/scylla_servers.yml
+    - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/scylla_servers.yml
     - ./prometheus/prom_rules/:/etc/prometheus/prom_rules/
-    - ./prometheus/scylla_manager_servers.yml:/etc/scylla.d/prometheus/scylla_manager_servers.yml
-    - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/node_exporter_servers.yml
+    - ./prometheus/scylla_manager_servers.yml:/etc/scylla.d/prometheus/targets/scylla_manager_servers.yml
+    - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/node_exporter_servers.yml
     # Uncomment the following line for prometheus persistency 
     # - path/to/data/dir:/prometheus/data
   promtail:

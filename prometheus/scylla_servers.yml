@@ -2,8 +2,10 @@
 
 # An example with a single cluster and two DC
 - targets:
-       - 172.17.0.2
+  - scylla-node1
+  - scylla-node2
+  - scylla-node3
   labels:
-       cluster: cluster1
-       dc: dc1
+    cluster: cluster1
+    dc: dc1
 

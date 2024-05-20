@@ -15,12 +15,12 @@ scrape_configs:
       labels:
         job: "syslog"
     relabel_configs:
-      - source_labels: ['__syslog_connection_ip_address']
-        target_label: 'instance'
-      - source_labels: ['__syslog_message_app_name']
-        target_label: 'app'
-      - source_labels: ['__syslog_message_severity']
-        target_label: 'severity'
+      - source_labels: ["__syslog_connection_ip_address"]
+        target_label: "instance"
+      - source_labels: ["__syslog_message_app_name"]
+        target_label: "app"
+      - source_labels: ["__syslog_message_severity"]
+        target_label: "severity"
     pipeline_stages:
       - match:
           selector: '{app="scylla"}'

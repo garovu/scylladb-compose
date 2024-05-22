@@ -7,7 +7,7 @@ services:
     ports:
     - 9093:9093
     volumes:
-    - ./prometheus/rule_config.yml:/etc/alertmanager/config.yml
+    - ./monitoring/prometheus/rule_config.yml:/etc/alertmanager/config.yml
   grafana:
     container_name: agraf
     environment:
@@ -25,9 +25,9 @@ services:
     ports:
     - 3000:3000
     volumes:
-    - ./grafana/build:/var/lib/grafana/dashboards
-    - ./grafana/plugins:/var/lib/grafana/plugins
-    - ./grafana/provisioning:/var/lib/grafana/provisioning
+    - ./monitoring/grafana/build:/var/lib/grafana/dashboards
+    - ./monitoring/grafana/plugins:/var/lib/grafana/plugins
+    - ./monitoring/grafana/provisioning:/var/lib/grafana/provisioning
     # Uncomment the following line for grafana persistency
     # - ./local/grafana:/var/lib/grafana
     # or use volume
@@ -42,8 +42,8 @@ services:
     ports:
     - 3100:3100
     volumes:
-    - ./loki/rules:/etc/loki/rules
-    - ./loki/conf:/mnt/config
+    - ./monitoring/loki/rules:/etc/loki/rules
+    - ./monitoring/loki/conf:/mnt/config
     # Uncomment the following line for grafana persistency
     # - ./local/loki/wal:/wal
     # using volume for persistency
@@ -56,11 +56,11 @@ services:
     ports:
     - 9090:9090
     volumes:
-    - ./prometheus/build/prometheus.yml:/etc/prometheus/prometheus.yml
-    - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/scylla_servers.yml
-    - ./prometheus/prom_rules/:/etc/prometheus/prom_rules/
-    - ./prometheus/scylla_manager_servers.yml:/etc/scylla.d/prometheus/targets/scylla_manager_servers.yml
-    - ./prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/node_exporter_servers.yml
+    - ./monitoring/prometheus/build/prometheus.yml:/etc/prometheus/prometheus.yml
+    - ./monitoring/prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/scylla_servers.yml
+    - ./monitoring/prometheus/prom_rules/:/etc/prometheus/prom_rules/
+    - ./monitoring/prometheus/scylla_manager_servers.yml:/etc/scylla.d/prometheus/targets/scylla_manager_servers.yml
+    - ./monitoring/prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/node_exporter_servers.yml
     # Uncomment the following line for prometheus persistency 
     # - ./local/prometheus:/prometheus/data
     # or use a volume
@@ -74,7 +74,7 @@ services:
     - 1514:1514
     - 9080:9080
     volumes:
-    - ./loki/promtail/promtail_config.compose.yml:/etc/promtail/config.yml
+    - ./monitoring/loki/promtail/promtail_config.compose.yml:/etc/promtail/config.yml
 networks:
   default:
     name: scylla-cluster_vnet

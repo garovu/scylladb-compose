@@ -625,3 +625,5 @@ strict_is_not_null_in_views: true
 # maximum_replication_factor_fail_threshold: -1
 api_ui_dir: /opt/scylladb/swagger-ui/dist/
 api_doc_dir: /opt/scylladb/api/api-doc/
+
+enable_keyspace_column_family_metrics: true

@@ -4,7 +4,6 @@ services:
     container_name: scylla-node1
     hostname: scylla-node1
     image: scylladb/scylla:latest
-    restart: always
     command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
@@ -20,7 +19,6 @@ services:
     container_name: scylla-node2
     hostname: scylla-node2
     image: scylladb/scylla:latest
-    restart: always
     command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M 
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
@@ -37,7 +35,6 @@ services:
     container_name: scylla-node3
     hostname: scylla-node3
     image: scylladb/scylla:latest
-    restart: always
     command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"

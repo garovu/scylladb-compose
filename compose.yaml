@@ -1,6 +1,4 @@
-version: "3"
 name: scylla-cluster
-
 services:
   scylla-node1:
     container_name: scylla-node1

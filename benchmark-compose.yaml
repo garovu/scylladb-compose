@@ -1,0 +1,19 @@
+# You should use benchmark-tools outside of scylla cluster,
+# if you want to the result of the benchmark is not affected by the scylla cluster itself.
+# But for testing purposes, I use docker-compose to run the benchmark-tools inside my docker.
+# They share the same resources, so the result may not be accurate.
+
+name: benchmark-tools
+services:
+  # Use cassandra-stress tool install in scylla container
+  # You also can install the canssandra-stress tool in your local machine.
+  # Follow my guide in the ./benchmark/README.md to install the cassandra-stress tool.
+  cassandra-stress:
+    container_name: cassandra-stress-container
+    image: scylladb/scylla:latest
+    # command: [cassandra-stress, write, n=1000000, -node, scylla-node1]
+  # Sycllabench tool
+networks:
+  default:
+    name: scylla-cluster_vnet
+    external: true # join to the scylla-cluster_vnet network

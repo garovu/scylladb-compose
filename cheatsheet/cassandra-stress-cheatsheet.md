@@ -2,9 +2,26 @@
 
 ## Installation
 
-1. Install Cassandra stress tool:
-    - For Linux: `sudo apt-get install cassandra-stress`
-    - For macOS: `brew install cassandra-stress`
+1. Install Cassandra stress tool
+Read ./benchmark/README.md
+
+## Useful Command
+
+1. Cassandra-stress help
+
+```shell
+    cassandra-stress
+    cassandra-stress help
+    cassandra-stress help <command|option>
+```
+
+Example:
+
+```shell
+cassandra-stress help write # command
+cassandra-stress help -mode # option
+
+```
 
 ## Basic Usage
 
@@ -49,3 +66,5 @@
 ## References
 
 - [Cassandra Stress Tool Documentation](https://cassandra.apache.org/doc/latest/tools/cassandra-stress.html)
+- [The Best and Worst of Cassandra-stress Tool by Christopher Batey, The Last Pickle - C* Summit 2016](https://www.youtube.com/watch?v=it4yqHXu4TE)
+- [Performance Testing by Ticketmaster: ScyllaDB vs. Cassandra vs. Datastax](https://www.youtube.com/watch?v=boMhPf_331E)

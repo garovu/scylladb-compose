@@ -1,6 +1,15 @@
-# Nodetool cheatsheet
+# ScyllaDB Nodetool cheatsheet
 
-## Overview
+Updated at: Mon 27 May
+
+## Key Operations
+
+### Print help of  nodetool
+
+```shell
+nodetool help
+nodetool help <command>
+```
 
 ### Check the version of nodetool
 
@@ -12,74 +21,106 @@ nodetool version
 
 ```shell
 nodetool status
+nodetool status -r # Show node domain names instead of IPs
 ```
 
 ### View information about a specific node
 
-```nodetool info <node_ip>```
+```shell
+nodetool info
+```
 
 ### View the ring topology of the cluster
 
-```nodetool ring```
+```shell
+nodetool ring
+```
 
 ### View the token ranges and ownership of the cluster
 
-```nodetool describering```
+```shell
+nodetool describering <keyspace_name>
+```
 
 ### View the status of a specific keyspace
 
-```nodetool status <keyspace_name>```
+```shell
+nodetool status <keyspace_name> # focus Owns (effective)
+```
 
-### View the status of a specific table
+### View the status of tables
 
-```nodetool tablestats <keyspace_name>.<table_name>```
+```shell
+nodetool tablestats # Show all tables status
+nodetool tablestats -H #  Display bytes in human readable form, i.e. KiB, MiB, GiB, TiB
+nodetool tablestats <keyspace_name> # Show all the status of tables in keyspace.
+nodetool tablestats <keyspace_name>.<table_name> # Show status of the table.
+```
 
-### View the compaction status
+### Print statistics on compactions
 
-```nodetool compactionstats```
+```shell
+nodetool compactionstats -H
+```
 
 ### Trigger a repair on a specific keyspace
 
-```nodetool repair <keyspace_name>```
+```shell
+nodetool repair <keyspace_name>
+```
 
 ### Trigger a cleanup on a specific keyspace
 
-```nodetool cleanup <keyspace_name>```
+```shell
+nodetool cleanup <keyspace_name>
+```
 
 ### Flush all memtables to disk
 
-```nodetool flush```
+```shell
+nodetool flush
+```
 
 ### Take a snapshot of a specific keyspace
 
-```nodetool snapshot <keyspace_name>```
+```shell
+nodetool snapshot <keyspace_name>
+```
 
 ### Enable/disable tracing for a specific request
 
-```nodetool settraceprobability <probability>```
+```shell
+nodetool settraceprobability <probability>
+```
 
 ### Enable/disable gossip tracing
 
-```nodetool setlogginglevel gossip trace/debug/off```
+```shell
+nodetool setlogginglevel gossip trace/debug/off
+```
 
 ### Enable/disable compaction throttling
 
-```nodetool setcompactionthroughput <value_in_mb>```
+```shell
+nodetool setcompactionthroughput <value_in_mb>
+```
 
 ### Enable/disable repair throttling
 
-```nodetool setrepairthroughput <value_in_mb>```
+```shell
+nodetool setrepairthroughput <value_in_mb>
+```
 
 ### Enable/disable auto-compaction
 
-`````````shell
+```shell
 nodetool enableautocompaction
 nodetool disableautocompaction
-`````````
+```
 
 ### Enable/disable incremental repair
 
-`````````shell
+```shell
 nodetool enableincrementalrepair
 nodetool disableincrementalrepair
-`````````
+```

@@ -4,14 +4,19 @@ services:
     container_name: scylla-node1
     hostname: scylla-node1
     image: scylladb/scylla:latest
-    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
+    command: --seeds=scylla-node1 --smp 1 --memory 750M
+    restart: unless-stopped
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
       - "./data/mutant-data.txt:/mutant-data.txt"
+      - "/etc/localtime:/etc/localtime:ro" # Sync the container's timezone with the host
     ports:
       - 9100:9100 # Node Exporter
       - 9180:9180 # Scylla Metrics
+      - 9042:9042 # Use this port for the Cassandra native protocol
+      - 9160:9160 # Use this port for the thrift protocol
+      - 7199:7199 # Use this port for JMX
     networks:
       vnet:
 
@@ -19,13 +24,18 @@ services:
     container_name: scylla-node2
     hostname: scylla-node2
     image: scylladb/scylla:latest
-    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M 
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
+    restart: unless-stopped
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+      - "/etc/localtime:/etc/localtime:ro" # Sync the container's timezone with the host
     ports:
       - 9101:9100 # Node Exporter
       - 9181:9180 # Scylla Metrics
+      - 9043:9042 # Use this port for the Cassandra native protocol
+      - 9161:9160 # Use this port for the thrift protocol
+      - 7200:7199 # Use this port for JMX
     depends_on:
       - scylla-node1
     networks:
@@ -36,12 +46,17 @@ services:
     hostname: scylla-node3
     image: scylladb/scylla:latest
     command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M
+    restart: unless-stopped
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
+      - "/etc/localtime:/etc/localtime:ro" # Sync the container's timezone with the host
     ports:
       - 9102:9100 # Node Exporter
       - 9182:9180 # Scylla Metrics
+      - 9044:9042 # Use this port for the Cassandra native protocol
+      - 9162:9160 # Use this port for the thrift protocol
+      - 7201:7199 # Use this port for JMX
     depends_on:
       - scylla-node1
       - scylla-node2

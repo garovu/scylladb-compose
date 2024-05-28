@@ -92,7 +92,7 @@ seed_provider:
           # In an existing cluster, specify the address of at least one existing node.
           # If you specify addresses of more than one node, use a comma to separate them.
           # For example: "<IP1>,<IP2>,<IP3>"
-          - seeds: "127.0.0.1"
+          - seeds: "scylla-node1,scylla-node2"
 
 # Address to bind to and tell other Scylla nodes to connect to.
 # You _must_ change this if you want multiple nodes to be able to communicate!
@@ -153,7 +153,7 @@ cas_contention_timeout_in_ms: 1000
 #   requests efficiently
 # - it allows Scylla to spread replicas around your cluster to avoid
 #   correlated failures. It does this by grouping machines into
-#   "datacenters" and "racks."  Scylla will do its best not to have
+#   "datacenters" and "racks."  Scylla log_group_log do its best not to have
 #   more than one replica on the same "rack" (which may not actually
 #   be a physical location)
 #

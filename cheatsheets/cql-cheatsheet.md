@@ -99,6 +99,59 @@ UPDATE <table_name> SET <column_name> = <new_value> WHERE <condition>;
 DELETE FROM <table_name> WHERE <condition>;
 ```
 
+## Altering
+
+### Altering Keyspace
+
+```sql
+-- Alter replication strategy
+ALTER KEYSPACE keyspace_name WITH REPLICATION = { 'class' : 'replication_class', 'replication_factor' : factor };
+
+-- Alter durable writes
+ALTER KEYSPACE keyspace_name WITH DURABLE_WRITES = true|false;
+```
+
+### Altering Table
+
+```sql
+-- Add a new column
+ALTER TABLE table_name ADD new_column_name data_type;
+
+-- Drop a column
+ALTER TABLE table_name DROP column_name;
+
+-- Rename a column
+ALTER TABLE table_name RENAME column_name TO new_column_name;
+
+-- Alter column type
+ALTER TABLE table_name ALTER column_name TYPE new_data_type;
+
+-- Add a new clustering column
+ALTER TABLE table_name ADD new_clustering_column_name data_type;
+
+-- Drop a clustering column
+ALTER TABLE table_name DROP clustering_column_name;
+
+-- Rename a clustering column
+ALTER TABLE table_name RENAME clustering_column_name TO new_clustering_column_name;
+
+-- Add a new partition key
+ALTER TABLE table_name ADD new_partition_key_column data_type;
+
+-- Drop a partition key
+ALTER TABLE table_name DROP partition_key_column;
+```
+
+### Altering Type
+
+```sql
+-- Add a new field to a user-defined type
+ALTER TYPE type_name ADD new_field_name data_type;
+
+-- Rename a field in a user-defined type
+ALTER TYPE type_name RENAME field_name TO new_field_name;
+```
+
 ### Data Types
 
 - **Text**: `text`

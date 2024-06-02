@@ -460,14 +460,14 @@ commitlog_total_space_in_mb: -1
 # validation. Client must provide a certificate 
 # accepted by the used trust store to connect.
 # 
-# server_encryption_options:
-#    internode_encryption: none
-#    certificate: conf/scylla.crt
-#    keyfile: conf/scylla.key
-#    truststore: <not set, use system trust>
-#    certficate_revocation_list: <not set>
-#    require_client_auth: False
-#    priority_string: <not set, use default>
+server_encryption_options:
+   internode_encryption: all
+   certificate: /etc/scylla/certs/db.crt
+   keyfile:  /etc/scylla/certs/db.key
+   truststore: etc/scylla/certs/cadb.pem 
+  #  certficate_revocation_list: <not set>
+   require_client_auth: false
+  #  priority_string: <not set, use default>
 
 # enable or disable client/server encryption.
 client_encryption_options:
@@ -476,7 +476,7 @@ client_encryption_options:
    keyfile:   /etc/scylla/certs/db.key
    truststore: /etc/scylla/certs/cadb.pem 
   #  certficate_revocation_list: <not set>
-   require_client_auth: false
+   require_client_auth: true
   #  priority_string: <not set, use default>
 
 # internode_compression controls whether traffic between nodes is

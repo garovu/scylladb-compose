@@ -1,0 +1,8 @@
+[connection]
+hostname = 172.19.0.2
+
+[ssl]
+certfile = /etc/scylla/certs/db.crt
+validate = false
+userkey = /etc/scylla/certs/db.key
+usercert = /etc/scylla/certs/db.crt

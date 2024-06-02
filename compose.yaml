@@ -9,8 +9,9 @@ services:
     volumes:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
-      - "./data/mutant-data.txt:/mutant-data.txt"
       - "/etc/localtime:/etc/localtime:ro" # Sync the container's timezone with the host
+      - "./certs:/etc/scylla/certs"
+      - "./config/cqlshrc:/root/.cassandra/cqlshrc"
     ports:
       - 9100:9100 # Node Exporter
       - 9180:9180 # Scylla Metrics
@@ -30,6 +31,7 @@ services:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
       - "/etc/localtime:/etc/localtime:ro" # Sync the container's timezone with the host
+      - "./certs:/etc/scylla/certs"
     ports:
       - 9101:9100 # Node Exporter
       - 9181:9180 # Scylla Metrics
@@ -51,6 +53,7 @@ services:
       - "./config/scylla.yaml:/etc/scylla/scylla.yaml"
       - "./config/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties"
       - "/etc/localtime:/etc/localtime:ro" # Sync the container's timezone with the host
+      - "./certs:/etc/scylla/certs"
     ports:
       - 9102:9100 # Node Exporter
       - 9182:9180 # Scylla Metrics

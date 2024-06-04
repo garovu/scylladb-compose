@@ -35,8 +35,6 @@ echo "Cassandra stress command: $CASSANDRA_STRESS"
 echo "Cassandra contact point: $CASSANDRA_CONTACT_POINT"
 echo "Number of threads: $NUM_THREADS"
 echo "Number of operations: $NUM_OPERATIONS"
-echo "Keyspace: $KEYSPACE"
-echo "Table: $TABLE"
 echo "Output file: $OUTPUT_FILE"
 echo "Sleep time: $SLEEP_TIME"
 
@@ -48,18 +46,18 @@ sleep 5
 # Run the Cassandra stress write (with default settings)
 echo "-> Running Cassandra stress write..."
 $CASSANDRA_STRESS write cl=$CONSISTENCY_LEVEL duration=$DURATION -node $CASSANDRA_CONTACT_POINT \
-    -graph file=write-graph.html > "write-$OUTPUT_FILE" 
+    -graph file="write-graph-$OUTPUT_FILE.html" > "write-$OUTPUT_FILE" 
 
 sleep_between_tasks()
 
 # Run the Cassandra stress read (with default settings)
 echo "-> Running Cassandra stress read..." 
 $CASSANDRA_STRESS read cl=$CONSISTENCY_LEVEL duration=$DURATION node $CASSANDRA_CONTACT_POINT \
-    -graph file=read-graph.html > "read-$OUTPUT_FILE" 2>&1
+    -graph file="read-graph-$OUTPUT_FILE.html" > "read-$OUTPUT_FILE" 2>&1
 
 sleep_between_tasks() 
 
 # Run the Cassandra stress mixed
 echo "-> Running Cassandra stress mixed..." 
 $CASSANDRA_STRESS mixed ratio\(read=1, write=3\) cl=$CONSISTENCY_LEVEL duration=$DURATION \
-    -node $CASSANDRA_CONTACT_POINT -graph file=write-graph.html >"mixed-$OUTPUT_FILE" 2>&1
+    -node $CASSANDRA_CONTACT_POINT -graph file="mixed-graph-$OUTPUT_FILE".html >"mixed-$OUTPUT_FILE" 2>&1

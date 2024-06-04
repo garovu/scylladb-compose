@@ -1,23 +1,23 @@
-version: "3.7"
+# This file is a part of the Scylla Manager documentation.
+# I modified it to run with the scylla cluster in the compose file.
+# https://manager.docs.scylladb.com/stable/docker/
 
+name: scylla-manager
 services:
   scylla-manager:
-    image: scylladb/scylla-manager
-    # volumes:
-      # - ./config/scylla-manager.yaml:/etc/scylla-manager/scylla-manager.yaml
+    image: scylladb/scylla-manager:latest
     networks:
       public:
     depends_on:
       - scylla-manager-db
 
   scylla-manager-db:
-    image: scylladb/scylla
+    image: scylladb/scylla:latest
     volumes:
       - scylla_manager_db_data:/var/lib/scylla
     networks:
       public:
-        ipv4_address: 192.168.100.200
-    command: --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    command: --smp 1 --memory 1G
 
   scylla:
     build:
@@ -25,15 +25,13 @@ services:
     image: scylladb/scylla-with-agent
     volumes:
       - scylla_data:/var/lib/scylla
-      # - ./config/scylla-manager-agent.yaml:/etc/scylla-manager-agent/scylla-manager-agent.yaml
-      # - ./config/scylla-manager-agent.conf:/etc/supervisord.conf.d/scylla-manager-agent.conf
     networks:
       public:
         ipv4_address: 192.168.100.100
-    command: --smp 1 --memory 1G
+    command: --smp 1
 
   minio:
-    image: minio/minio
+    image: minio/minio:latest
     volumes:
       - minio_data:/data
     networks:

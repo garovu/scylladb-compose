@@ -13,6 +13,14 @@ services:
     image: scylladb/scylla:latest
     # command: [cassandra-stress, write, n=1000000, -node, scylla-node1]
   # Sycllabench tool
+    volumes:
+      - ./benchmark/scylladb-first-benchmark.sh:/scylladb-first-benchmark.sh
+
+  # sycllabench:
+  #   container_name: sycllabench-container
+  #   image: scylladb/scylla:latest
+    # command: [sycllabench, -node, scylla-node1]
+  
 networks:
   default:
     name: scylla-cluster_vnet

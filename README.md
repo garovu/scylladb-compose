@@ -1,6 +1,6 @@
 # ScyllaDB Docker Compose
 
-This repository contains a Docker Compose configuration for running ScyllaDB, a highly scalable NoSQL database.
+This repository contains a Docker Compose configuration for running a testing ScyllaDB cluster, a highly scalable NoSQL database.
 
 ## Prerequisites
 
@@ -89,17 +89,24 @@ Issues:
 
     This will open a CQL shell where you can interact with the ScyllaDB cluster.
 
-6. When you're done, stop the ScyllaDB cluster:
+6. Start ScyllaDB Monotoring cluster:
+
+    ```shell
+    docker-compose -f monitoring-conmpose.yaml up
+    ```
+
+7. When you're done, stop the ScyllaDB cluster:
 
     ```shell
     docker-compose down
+    docker-compose -f monitoring-conmpose.yaml down
     ```
 
     This will stop and remove the ScyllaDB container.
 
 ## Configuration
 
-The Docker Compose configuration file (`compose.yml`) allows you to customize various aspects of the ScyllaDB cluster, such as the number of nodes, memory limits, and network settings. Refer to the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/) for more information on how to configure the ScyllaDB cluster.
+The configuration file (`compose.yml`and others `*-compose.yaml`) allows you to customize various aspects of the ScyllaDB cluster, such as the number of nodes, memory limits, and network settings. Refer to the [Docker Compose documentation](https://docs.docker.com/compose/compose-file/) for more information on how to configure the ScyllaDB cluster.
 
 ## Contributing
 

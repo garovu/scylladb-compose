@@ -1,5 +1,6 @@
 name: scylla-monitoring-stack
 services:
+
   alertmanager:
     container_name: alertmanager-container
     image: prom/alertmanager:v0.27.0
@@ -7,8 +8,9 @@ services:
     - 9093:9093
     volumes:
     - ./monitoring/prometheus/rule_config.yml:/etc/alertmanager/config.yml
+
   grafana:
-    container_name: agraf
+    container_name: grafana-container
     environment:
     - GF_PANELS_DISABLE_SANITIZE_HTML=true
     - GF_PATHS_PROVISIONING=/var/lib/grafana/provisioning
@@ -31,10 +33,11 @@ services:
     # - ./local/grafana:/var/lib/grafana
     # or use volume
     - grafana-vol:/var/lib/grafana
+
   loki:
+    container_name: loki-container
     command:
     - --config.file=/mnt/config/loki-config.yaml
-    container_name: loki
     image: grafana/loki:2.9.5
     privileged: true
     user: root
@@ -47,10 +50,11 @@ services:
     # - ./local/loki/wal:/wal
     # using volume for persistency
     - loki-wal:/wal
+
   promotheus:
     command:
     - --config.file=/etc/prometheus/prometheus.yml
-    container_name: aprom
+    container_name: prometheus-container
     image: prom/prometheus:v2.51.0
     ports:
     - 9090:9090
@@ -64,10 +68,11 @@ services:
     # - ./local/prometheus:/prometheus/data
     # or use a volume
     - prometheus-vol:/prometheus
+
   promtail:
+    container_name: promtail-container
     command:
     - --config.file=/etc/promtail/config.yml
-    container_name: promtail
     image: grafana/promtail:2.9.5
     ports:
     - 1514:1514
